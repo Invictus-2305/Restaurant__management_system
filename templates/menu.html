@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Menu</title>
+    <!-- <link rel="stylesheet" href="styles.css"> -->
+    <style>
+        /* Styles for the logout button */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            display: flex;
+            width: 80%;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+            background-color: #fff;
+        }
+
+        .categories {
+            width: 30%;
+            border-right: 1px solid #ddd;
+            padding: 20px;
+            background-color: #f8f8f8;
+        }
+
+        .menu-items {
+            width: 70%;
+            padding: 20px;
+        }
+
+        .categories ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .categories li {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #ddd;
+            transition: background-color 0.3s;
+        }
+
+        .categories li:hover {
+            background-color: #e0e0e0;
+        }
+
+        .menu-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .menu-item h4 {
+            margin: 0 0 5px;
+        }
+
+        .menu-item p {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Categories Div -->
+        <div class="categories">
+            <h3>Menu Categories</h3>
+            <ul id="categoryList">
+                <!-- Categories will be dynamically populated here -->
+            </ul>
+        </div>
+
+        <!-- Menu Items Div -->
+        <div class="menu-items">
+            <h3>Menu Items</h3>
+            <div id="itemList">
+                <!-- Menu items will be dynamically populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        fetch('/api/menu')
+            .then(response => response.json())
+            .then(items => {
+                const categoryList = document.getElementById('categoryList');
+                const itemList = document.getElementById('itemList');
+
+                // Group items by category
+                const categorizedItems = items.reduce((acc, item) => {
+                    if (!acc[item.category]) {
+                        acc[item.category] = [];
+                    }
+                    acc[item.category].push(item);
+                    return acc;
+                }, {});
+
+                // Populate the sidebar with categories
+                Object.keys(categorizedItems).forEach(category => {
+                    const li = document.createElement('li');
+                    li.textContent = category;
+                    li.onclick = () => {
+                        displayItems(category);
+                        setActiveCategory(li);
+                    };
+                    categoryList.appendChild(li);
+                });
+
+                // Function to display items based on the selected category
+                function displayItems(category) {
+                    itemList.innerHTML = ''; // Clear existing items
+                    const itemsToDisplay = categorizedItems[category] || [];
+                    itemsToDisplay.forEach(item => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'menu-item';
+                        itemDiv.innerHTML = `
+                    <h4>${item.name} - ₹${item.price}</h4>
+                    <p>${item.description}</p>`;
+                        itemList.appendChild(itemDiv);
+                    });
+                }
+
+                // Set active class to highlight the selected category
+                function setActiveCategory(activeLi) {
+                    const categories = document.querySelectorAll('.categories li');
+                    categories.forEach(cat => cat.classList.remove('active-category'));
+                    activeLi.classList.add('active-category');
+                }
+            })
+            .catch(error => console.error('Error fetching menu items:', error));
+    </script>
+</body>
+
+</html>

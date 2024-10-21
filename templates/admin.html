@@ -1,0 +1,330 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Page</title>
+    <script>
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const error = urlParams.get('error');
+            const success = urlParams.get('success');
+            if (success) {
+                document.getElementById('success-message').innerText = success;
+                document.getElementById('successModal').style.display = 'block';
+            }
+            if (error) {
+                document.getElementById('error-message').innerText = error;
+                document.getElementById('errorModal').style.display = 'block';
+            }
+        }
+        function closeModal() {
+            document.getElementById('errorModal').style.display = 'none';
+            document.getElementById('successModal').style.display = 'none';
+        }
+        
+    </script>
+    <style>
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+            padding-top: 60px;
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Admin Page</h1>
+    <form id="registerForm" method="POST" action="/register_user">
+        <label for="username">Username</label>
+        <input type="text" name="username" id="username" required></br>
+        </br>
+        <label for="password">Password</label>
+        <input type="password" name="password" id="password" required>
+        </br>
+        </br>
+        <label for="access">Access Level</label>
+        <select name="access" id="access" required>
+            <option value="admin">Admin</option>
+            <option value="waiter">Waiter</option>
+            <option value="kitchen">Kitchen</option>
+        </select>
+        </br>
+        </br>
+        <button type="submit">Register User</button>
+    </form>
+
+    <h2>Delete User</h2>
+    <form id="deleteForm" method="POST" action="/delete_user">
+        <label for="username">Username</label>
+        <select name = "username" id= "username" >
+            <option value="" disabled selected>Select User</option>
+            {% for user in users %}
+            <option>{{user.username}}</option>
+            {% endfor %}
+        </select>
+        </br>
+        </br>
+        <button type="submit">Delete User</button>
+    </form>
+
+    <h2>Assign Table to Customer</h2>
+    <form id="assignTableForm" method="POST" action="/assign_table">
+        <label for="table_number">Table Number</label>
+        <select name="table_number" id="table_number" required>
+            <option value="" disabled selected>Select Table</option>
+            {% for table in available_tables %}
+                <option value="{{ table.table_number }}">Table {{ table.table_number }}</option>
+            {% endfor %}
+        </select></br>
+        </br>
+        <label for="customer_name">Customer Name</label>
+        <input type="text" name="customer_name" id="customer_name" required></br>
+        </br>
+        <button type="submit">Assign Table</button>
+    </form>
+
+    <h2>Existing Users</h2>
+    <ul>
+        {% for usr in user %}
+            <li>{{ usr.username }} - {{ usr.access }}</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Table Status</h2>
+    <ul>
+        {% for table in tables %}
+            <li>Table {{ table.table_number }} - {{ table.status }}{% if table.status == 'occupied' %} ({{ table.customer_name }}){% endif %}</li>
+        {% endfor %}
+    </ul>
+
+
+    <div id="errorModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <p id="error-message"></p>
+        </div>
+    </div>
+
+
+    <div id="successModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <p id="success-message"></p>
+        </div>
+    </div>
+    <br>
+    <br>
+    <a href="/logout">Logout</a>
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+</head>
+<body>
+    <h1>Admin Page</h1>
+
+    <!-- Register User Form -->
+    <div id="register-form">
+        <h2>Register User</h2>
+        <form id="registerUserForm">
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <select name="access" required>
+                <option value="" disabled selected>Select Access Level</option>
+                <option value="admin">Admin</option>
+                <option value="waiter">Waiter</option>
+                <option value="kitchen">Kitchen</option>
+            </select>
+            <button type="submit">Register User</button>
+        </form>
+    </div>
+
+    <!-- Delete User Form -->
+    <div id="delete-form">
+        <h2>Delete User</h2>
+        <form id="deleteUserForm">
+            <select name="username" id="userSelect" required>
+                <!-- Will be populated dynamically -->
+            </select>
+            <button type="submit">Delete User</button>
+        </form>
+    </div>
+
+    <!-- Assign Table Form -->
+    <div id="assign-table-form">
+        <h2>Assign Table to Customer</h2>
+        <form id="assignTableForm">
+            <select name="table_number" id="tableSelect" required>
+                <!-- Will be populated dynamically -->
+            </select>
+            <input type="text" name="customer_name" placeholder="Customer Name" required>
+            <button type="submit">Assign Table</button>
+        </form>
+    </div>
+
+    <!-- Dynamic Lists -->
+    <div id="existing-users">
+        <h2>Existing Users</h2>
+        <ul id="userList">
+            <!-- Will be populated dynamically -->
+        </ul>
+    </div>
+
+    <div id="table-status">
+        <h2>Table Status</h2>
+        <ul id="tableList">
+            <!-- Will be populated dynamically -->
+        </ul>
+    </div>
+
+    <a href="/logout">Logout</a>
+
+    <script>
+        // Initialize data on page load
+        const initialData = {
+            users: {{ users|tojson|safe }},
+            tables: {{ tables|tojson|safe }},
+            available_tables: {{ available_tables|tojson|safe }}
+        };
+
+        // Update lists with initial data
+        document.addEventListener('DOMContentLoaded', function() {
+            updateUserList(initialData.users);
+            updateUserSelect(initialData.users);
+            updateTableList(initialData.tables);
+            updateTableSelect(initialData.available_tables);
+        });
+
+        const socket = io();
+        
+        // Handle real-time updates
+        socket.on('users_updated', function(data) {
+            updateUserList(data.users);
+            updateUserSelect(data.users);
+        });
+
+        socket.on('tables_updated', function(data) {
+            updateTableList(data.tables);
+            updateTableSelect(data.tables);
+        });
+
+        // Helper functions to update the DOM
+        function updateUserList(users) {
+            const userList = document.getElementById('userList');
+            userList.innerHTML = '';
+            users.forEach(user => {
+                userList.innerHTML += `<li>${user.username} - ${user.access}</li>`;
+            });
+        }
+
+        function updateUserSelect(users) {
+            const userSelect = document.getElementById('userSelect');
+            userSelect.innerHTML = '<option value="" disabled selected>Select User</option>';
+            users.forEach(user => {
+                userSelect.innerHTML += `<option value="${user.username}">${user.username}</option>`;
+            });
+        }
+
+        function updateTableList(tables) {
+            const tableList = document.getElementById('tableList');
+            tableList.innerHTML = '';
+            tables.forEach(table => {
+                const status = table.status === 'occupied' 
+                    ? `${table.status} (${table.customer_name})` 
+                    : table.status;
+                tableList.innerHTML += `<li>Table ${table.table_number} - ${status}</li>`;
+            });
+        }
+
+        function updateTableSelect(tables) {
+            const tableSelect = document.getElementById('tableSelect');
+            tableSelect.innerHTML = '<option value="" disabled selected>Select Table N/umber</option>';
+            tables.filter(table => table.status === 'available').forEach(table => {
+                tableSelect.innerHTML += `<option value="${table.table_number}">Table ${table.table_number}</option>`;
+            });
+        }
+
+        // Form submission handlers
+        document.getElementById('registerUserForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            fetch('/register_user', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'error') {
+                    alert(data.message);
+                }
+                this.reset();
+            });
+        });
+
+        document.getElementById('deleteUserForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            fetch('/delete_user', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'error') {
+                    alert(data.message);
+                }
+                this.reset();
+            });
+        });
+
+        document.getElementById('assignTableForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            fetch('/assign_table', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'error') {
+                    alert(data.message);
+                }
+                this.reset();
+            });
+        });
+    </script>
+</body>
+</html>
