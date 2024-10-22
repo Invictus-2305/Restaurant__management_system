@@ -1,129 +1,3 @@
-# from flask import Flask, request, render_template, redirect, url_for, session, jsonify
-# from pymongo import MongoClient
-
-# app = Flask(__name__)
-# app.secret_key = 'your_secret_key'  # Needed for session management
-
-# # MongoDB setup
-# client = MongoClient('mongodb://localhost:27017/')
-# db = client['Software_Proj']
-# user_collection = db['users']
-# table_collection = db['tables']
-
-# @app.route('/', methods=['GET'])
-# def default():
-#     return redirect(url_for('login'))
-
-# @app.route('/login', methods=['GET'])
-# def login_form():
-#     error = request.args.get('error')
-#     return render_template('login.html', error=error)
-
-# @app.route('/login', methods=['POST'])
-# def login():
-#     username = request.form.get('username')
-#     password = request.form.get('password')
-
-#     user = user_collection.find_one({"username": username})
-#     if user and user['password'] == password:
-#         session['username'] = username
-#         session['access'] = user['access']
-#         return redirect(url_for(user['access']))
-#     else:
-#         return redirect(url_for('login_form', error='Invalid login, please try again.'))
-
-# @app.route('/waiter', methods=['GET'])
-# def waiter():
-#     if 'username' in session:
-#         tables = table_collection.find()
-#         return render_template('wait.html', access=session['access'], tables=tables)
-#     else:
-#         return redirect(url_for('login_form', error='Please log in first.'))
-
-# @app.route('/admin', methods=['GET'])
-# def admin():
-#     if 'username' in session and session['access'] == 'admin':
-#         users = user_collection.find()
-#         usr = user_collection.find()
-#         tables = table_collection.find()
-#         available_tables = table_collection.find({"status": "available"})
-#         return render_template('admin.html', users=users, user=usr,tables=tables, available_tables=available_tables)
-#     else:
-#         return redirect(url_for('login_form', error='Unauthorized access.'))
-
-# @app.route('/register_user', methods=['POST'])
-# def register_user():
-#     if 'username' in session and session['access'] == 'admin':
-#         username = request.form.get('username')
-#         password = request.form.get('password')
-#         access = request.form.get('access')
-
-#         if user_collection.find_one({"username": username}):
-#             return redirect(url_for('admin', error='Username already exists.'))
-
-#         user_collection.insert_one({"username": username, "password": password, "access": access})
-#         return redirect(url_for('admin', success='User registered successfully.'))
-#     else:
-#         return redirect(url_for('login_form', error='Unauthorized access.'))
-
-# @app.route('/delete_user', methods=['POST'])
-# def delete_user():
-#     if 'username' in session and session['access'] == 'admin':
-#         username = request.form.get('username')
-
-#         if user_collection.find_one({"username": username}):
-#             user_collection.delete_one({"username": username})
-#             return redirect(url_for('admin', success='User deleted successfully.'))
-#         else:
-#             return redirect(url_for('admin', error='User not found.'))
-#     else:
-#         return redirect(url_for('login_form', error='Unauthorized access.'))
-
-# @app.route('/kitchen', methods=['GET'])
-# def kitchen():
-#     if 'username' in session:
-#         return render_template('kitchen.html', access=session['access'])
-#     else:
-#         return redirect(url_for('login_form', error='Please log in first.'))
-
-# @app.route('/logout', methods=['GET'])
-# def logout():
-#     session.pop('username', None)
-#     session.pop('access', None)
-#     return redirect(url_for('login_form'))
-
-# @app.route('/assign_table', methods=['POST'])
-# def assign_table():
-#     if 'username' in session and session['access'] == 'admin':
-#         table_number = request.form.get('table_number')
-#         customer_name = request.form.get('customer_name')
-
-#         table = table_collection.find_one({"table_number": table_number})
-#         if table:
-#             table_collection.update_one(
-#                 {"table_number": table_number},
-#                 {"$set": {"status": "occupied", "customer_name": customer_name}}
-#             )
-#             return redirect(url_for('admin', success='Table assigned successfully.'))
-#         else:
-#             return redirect(url_for('admin', error='Table not found.'))
-#     else:
-#         return redirect(url_for('login_form', error='Unauthorized access.'))
-
-# @app.route('/get_orders/<string:table_number>', methods=['GET'])
-# def get_orders(table_number):
-#     if 'username' in session and session['access'] == 'waiter':
-#         table = table_collection.find_one({"table_number": table_number})
-#         if table:
-#             return jsonify(table.get('orders', []))
-#         else:
-#             return jsonify({"error": "Table not found"}), 404
-#     else:
-#         return jsonify({"error": "Unauthorized access"}), 403
-
-# if __name__ == '__main__':
-#     app.run(debug=True)
-
 from flask import Flask, request, render_template, redirect, url_for, session, jsonify, send_file
 from flask_socketio import SocketIO, emit
 from pymongo import MongoClient
@@ -140,13 +14,24 @@ app.secret_key = 'your_secret_key'
 socketio = SocketIO(app)
 
 # MongoDB setup
-client = MongoClient('mongodb://localhost:27017/')
+# MongoDB connection string
+connection_string = "connection_String"
+
+try:
+    client = MongoClient(connection_string)
+
+    client.admin.command('ping')
+    print("Connected to MongoDB successfully!")
+
+except ConnectionFailure as e:
+    print(f"Failed to connect to MongoDB: {e}")
+
 db = client['Software_Proj']
 user_collection = db['users']
 table_collection = db['tables']
 order_collection = db['orders']
 menu_collection = db['menu']
-# Existing routes remain the same until re
+
 # gister_user
 @app.route('/', methods=['GET'])
 def default():
