@@ -24,7 +24,7 @@ app.secret_key = 'your_secret_key'
 socketio = SocketIO(app)
 
 
-connection_string = "mongodb://localhost:27017/"
+connection_string = "Your_Connection_String"
 
 try:
     # Create a MongoClient instance
