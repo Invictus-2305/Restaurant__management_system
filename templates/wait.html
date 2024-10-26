@@ -6,12 +6,21 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <style>
+        /* General Container Styling */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
         .container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
         }
 
+        /* Table Grid Layout */
         .table-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -25,6 +34,17 @@
             padding: 15px;
             cursor: pointer;
             transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .table-card h3 {
+            margin: 0;
+            font-size: 1.2em;
+        }
+
+        .table-card p {
+            margin: 5px 0;
+            color: #555;
         }
 
         .table-card:hover {
@@ -32,12 +52,13 @@
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
 
-        .table-card.available {
+        /* Table Card Status Styles */
+        .table-card.occupied {
             background-color: #e8f5e9;
             border-color: #4caf50;
         }
 
-        .table-card.occupied {
+        .table-card.available {
             background-color: #ffebee;
             border-color: #f44336;
         }
@@ -47,6 +68,8 @@
             background-color: #e3f2fd !important;
         }
 
+
+        /* Orders Section Styling */
         .orders-section {
             margin-top: 30px;
             padding: 20px;
@@ -62,6 +85,12 @@
             margin-bottom: 20px;
         }
 
+        .orders-header h2,
+        .orders-header h3 {
+            margin: 0;
+        }
+
+        /* Orders Grid Layout */
         .orders-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -80,59 +109,99 @@
             color: #333;
         }
 
+        .order-card p {
+            margin: 5px 0;
+            color: #555;
+        }
+
+        /* Status Badge Styles */
         .status-badge {
             display: inline-block;
             padding: 4px 8px;
             border-radius: 4px;
             font-size: 0.9em;
             font-weight: bold;
+            color: white;
         }
 
+        /* Status Colors */
         .status-pending {
-            background-color: #fff3e0;
-            color: #f57c00;
+            background-color: #ff9800;
         }
 
         .status-preparing {
-            background-color: #e3f2fd;
-            color: #1976d2;
+            background-color: #2196f3;
         }
 
         .status-ready {
-            background-color: #e8f5e9;
-            color: #388e3c;
+            background-color: #4caf50;
         }
 
-        .logout-button {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 10px 20px;
-            background-color: #f44336;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .order-button {
-            position: fixed;
-            top: 20px;
-            right: 120px;
-            padding: 10px 20px;
-            background-color: #f44336;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
+        /* Placeholder Text for No Orders */
         .no-orders {
             text-align: center;
             padding: 20px;
             background: white;
             border-radius: 8px;
             grid-column: 1 / -1;
+            color: #777;
+        }
+
+        /* Invoice and QR Code Buttons */
+        .invoice-button {
+            padding: 10px 20px;
+            background-color: #2196f3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-top: 20px;
+        }
+
+        .invoice-button:hover {
+            background-color: #1976d2;
+        }
+
+        /* UPI QR Code Section */
+        #upiQRCode {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        #upiQRCode img {
+            width: 100%;
+            max-width: 250px;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        /* Logout and Order Buttons */
+        .logout-button,
+        .order-button {
+            position: fixed;
+            top: 20px;
+            padding: 10px 20px;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .logout-button {
+            right: 20px;
+            background-color: #f44336;
+        }
+
+        .order-button {
+            right: 120px;
+            background-color: #f44336;
+        }
+
+        .logout-button:hover,
+        .order-button:hover {
+            background-color: #d32f2f;
         }
     </style>
 </head>
@@ -140,24 +209,31 @@
 <body>
     <div class="container">
         <h1>Waiter Dashboard</h1>
-    
+
         <div id="tableGrid" class="table-grid">
             <!-- Table grid content will be dynamically populated -->
         </div>
-    
+
         <div id="ordersSection" class="orders-section">
             <div class="orders-header">
                 <h2>Orders for Table <span id="selectedTableNumber"></span></h2>
                 <h3 id="customerName"></h3>
             </div>
-    
+
             <div id="ordersGrid" class="orders-grid">
                 <!-- Orders grid content will be dynamically populated -->
             </div>
-    
+
             <button id="generateInvoice" class="invoice-button" style="display: none;">Generate Invoice</button>
+            <button id="generateUPIQR" class="invoice-button" style="display: none;">Generate UPI QR Code</button>
+
+            <!-- Placeholder for UPI QR Code -->
+            <div id="upiQRCode" style="margin-top: 20px; display: none;">
+                <h3>UPI QR Code</h3>
+                <img id="qrCodeImage" src="" alt="UPI QR Code" />
+            </div>
         </div>
-    
+
         <a href="/order" class="order-button">Order</a>
         <a href="/logout" class="logout-button">Logout</a>
     </div>
@@ -191,52 +267,179 @@
             }
         });
 
+        // function updateTableGrid(tables) {
+        //     const tableGrid = document.getElementById('tableGrid');
+        //     tableGrid.innerHTML = '';
+
+        //     tables.forEach(table => {
+        //         const tableCard = document.createElement('div');
+        //         tableCard.className = `table-card ${table.status}`;
+        //         if (selectedTable === table.table_number) {
+        //             tableCard.classList.add('selected');
+        //         }
+
+        //         tableCard.innerHTML = `
+        //             <h3>Table ${table.table_number}</h3>
+        //             <p>Status: ${table.status}</p>
+        //             ${table.status === 'occupied' ? `<p>Customer: ${table.customer_name}</p>` : ''}
+        //         `;
+
+        //         tableCard.addEventListener('click', () => selectTable(table.table_number, table.customer_name));
+        //         tableGrid.appendChild(tableCard);
+        //     });
+        // }
         function updateTableGrid(tables) {
             const tableGrid = document.getElementById('tableGrid');
             tableGrid.innerHTML = '';
 
+            // Sort tables in ascending order by table_number
+            tables.sort((a, b) => a.table_number - b.table_number);
+
             tables.forEach(table => {
                 const tableCard = document.createElement('div');
                 tableCard.className = `table-card ${table.status}`;
+
                 if (selectedTable === table.table_number) {
                     tableCard.classList.add('selected');
                 }
 
                 tableCard.innerHTML = `
-                    <h3>Table ${table.table_number}</h3>
-                    <p>Status: ${table.status}</p>
-                    ${table.status === 'occupied' ? `<p>Customer: ${table.customer_name}</p>` : ''}
-                `;
+            <h3>Table ${table.table_number}</h3>
+            <p>Status: ${table.status}</p>
+            ${table.status === 'occupied' ? `<p>Customer: ${table.customer_name}</p>` : ''}
+        `;
 
                 tableCard.addEventListener('click', () => selectTable(table.table_number, table.customer_name));
                 tableGrid.appendChild(tableCard);
             });
         }
 
+
+        // function selectTable(tableNumber, customerName) {
+        //     // Remove previous selection
+        //     const previousSelected = document.querySelector('.table-card.selected');
+        //     if (previousSelected) {
+        //         previousSelected.classList.remove('selected');
+        //     }
+
+        //     // Update selection
+        //     selectedTable = tableNumber;
+        //     const newSelected = document.querySelector(`.table-card:nth-child(${tableNumber})`);
+        //     if (newSelected) {
+        //         newSelected.classList.add('selected');
+        //     }
+
+        //     // Show orders section and update orders
+        //     const ordersSection = document.getElementById('ordersSection');
+        //     ordersSection.style.display = 'block';
+
+        //     // Update table number and customer name in header
+        //     document.getElementById('selectedTableNumber').textContent = tableNumber;
+        //     document.getElementById('customerName').textContent = customerName ? `Customer: ${customerName}` : '';
+
+        //     updateOrders(tableNumber);
+        // }
         function selectTable(tableNumber, customerName) {
-            // Remove previous selection
-            const previousSelected = document.querySelector('.table-card.selected');
-            if (previousSelected) {
-                previousSelected.classList.remove('selected');
+            // Remove 'selected' class from previously selected table, if any
+            const previouslySelected = document.querySelector('.table-card.selected');
+            if (previouslySelected) {
+                previouslySelected.classList.remove('selected');
             }
 
-            // Update selection
-            selectedTable = tableNumber;
-            const newSelected = document.querySelector(`.table-card:nth-child(${tableNumber})`);
+            // Find and add 'selected' class to the new table card
+            const newSelected = [...document.querySelectorAll('.table-card')].find(card =>
+                card.querySelector('h3').textContent.includes(`Table ${tableNumber}`)
+            );
+
             if (newSelected) {
                 newSelected.classList.add('selected');
             }
 
-            // Show orders section and update orders
-            const ordersSection = document.getElementById('ordersSection');
-            ordersSection.style.display = 'block';
+            // Update selected table variable
+            selectedTable = tableNumber;
 
-            // Update table number and customer name in header
+            // Show orders section and update order details
+            document.getElementById('ordersSection').style.display = 'block';
             document.getElementById('selectedTableNumber').textContent = tableNumber;
             document.getElementById('customerName').textContent = customerName ? `Customer: ${customerName}` : '';
 
             updateOrders(tableNumber);
         }
+
+
+        // function updateOrders(tableNumber) {
+        //     fetch(`/get_orders/${tableNumber}`)
+        //         .then(response => {
+        //             if (!response.ok) {
+        //                 throw new Error('Network response was not ok');
+        //             }
+        //             return response.json();
+        //         })
+        //         .then(orders => {
+        //             showInvoiceButton(tableNumber);
+        //             updateOrdersList(orders);
+        //         })
+        //         .catch(error => {
+        //             hideInvoiceButton();
+        //             console.error('Error fetching orders:', error);
+        //             document.getElementById('ordersGrid').innerHTML = `<p>No orders on this table yet</p>`;
+        //         });
+        // }
+
+        function getStatusClass(status) {
+            switch (status.toLowerCase()) {
+                case 'pending': return 'status-pending';
+                case 'preparing': return 'status-preparing';
+                case 'ready': return 'status-ready';
+                default: return '';
+            }
+        }
+
+        // function updateOrdersList(orders) {
+        //     const ordersGrid = document.getElementById('ordersGrid');
+        //     ordersGrid.innerHTML = '';
+
+        //     if (!orders || orders.length === 0) {
+        //         ordersGrid.innerHTML = '<p>No orders for this table</p>';
+        //         return;
+        //     }
+
+        //     orders.forEach(order => {
+        //         order.items.forEach(item => {
+        //             const orderCard = document.createElement('div');
+        //             orderCard.className = 'order-card';
+        //             orderCard.innerHTML = `
+        //                 <h4>${item.name}</h4>
+        //                 <p>Quantity: ${item.quantity}</p>
+        //                 <span class="status-badge ${getStatusClass(order.status)}">${order.status}</span>
+        //             `;
+        //             ordersGrid.appendChild(orderCard);
+        //         });
+        //     });
+        // }
+
+        // function showInvoiceButton(tableNumber) {
+        //     const invoiceButton = document.getElementById('generateInvoice');
+        //     const qrButton = document.getElementById('generateUPIQR');
+        //     invoiceButton.style.display = 'block';
+        //     qrButton.style.display = 'block';
+
+        //     invoiceButton.onclick = function () {
+        //         generateInvoice(tableNumber);
+        //     };
+
+        //     qrButton.onclick = function () {
+        //         generateUPIQRCode(tableNumber);
+        //     };
+        // }
+        // function hideInvoiceButton() {
+        //     const invoiceButton = document.getElementById('generateInvoice');
+        //     const qrButton = document.getElementById('generateUPIQR');
+        //     const qr = document.getElementById("upiQRCode");
+        //     invoiceButton.style.display = 'none';
+        //     qrButton.style.display = 'none';
+        //     qr.style.display = 'none';
+        // }
 
         function updateOrders(tableNumber) {
             fetch(`/get_orders/${tableNumber}`)
@@ -247,27 +450,46 @@
                     return response.json();
                 })
                 .then(orders => {
-                    updateOrdersList(orders);
-                    showInvoiceButton(tableNumber);
+                    // Check if there are orders for the table and update the visibility of the buttons
+                    if (orders && orders.length > 0) {
+                        showInvoiceButtons(true);
+                        updateOrdersList(orders);
+                    } else {
+                        showInvoiceButtons(false);
+                        document.getElementById('ordersGrid').innerHTML = '<p>No orders for this table</p>';
+                    }
                 })
                 .catch(error => {
                     console.error('Error fetching orders:', error);
-                    const ordersGrid = document.getElementById('ordersGrid');
-                    ordersGrid.innerHTML = `<p>Error loading orders: ${error.message}</p>`;
+                    document.getElementById('ordersGrid').innerHTML = '<p>Error loading orders</p>';
+                    showInvoiceButtons(false);
                 });
         }
 
 
-        function getStatusClass(status) {
-            switch (status.toLowerCase()) {
-                case 'pending':
-                    return 'status-pending';
-                case 'preparing':
-                    return 'status-preparing';
-                case 'ready':
-                    return 'status-ready';
-                default:
-                    return '';
+
+        function showInvoiceButtons(visible) {
+            const invoiceButton = document.getElementById('generateInvoice');
+            const qrButton = document.getElementById('generateUPIQR');
+            const qrCodeSection = document.getElementById('upiQRCode');
+
+            // Show or hide buttons based on whether there are orders
+            invoiceButton.style.display = visible ? 'block' : 'none';
+            qrButton.style.display = visible ? 'block' : 'none';
+
+            if (!visible) {
+                qrCodeSection.style.display = 'none';
+            }
+
+            // Set up click handlers when showing the buttons
+            if (visible) {
+                invoiceButton.onclick = function () {
+                    generateInvoice(selectedTable);
+                };
+
+                qrButton.onclick = function () {
+                    generateUPIQRCode(selectedTable);
+                };
             }
         }
 
@@ -275,37 +497,65 @@
             const ordersGrid = document.getElementById('ordersGrid');
             ordersGrid.innerHTML = '';
 
-            // Flatten the array of arrays into one array of items
-            const flattenedOrders = orders.flat();
-
-            if (!flattenedOrders || flattenedOrders.length === 0) {
+            if (!orders || orders.length === 0) {
                 ordersGrid.innerHTML = '<p>No orders for this table</p>';
                 return;
             }
 
-            flattenedOrders.forEach(order => {
-                const orderItem = document.createElement('div');
-                orderItem.className = 'order-item';
-                orderItem.innerHTML = `
-            <h4>${order.name}</h4>
-            <p>Quantity: ${order.quantity}</p>
-        `;
-                ordersGrid.appendChild(orderItem);
+            orders.forEach(order => {
+                order.items.forEach(item => {
+                    const orderCard = document.createElement('div');
+                    orderCard.className = 'order-card';
+                    orderCard.innerHTML = `
+                <h4>${item.name}</h4>
+                <p>Quantity: ${item.quantity}</p>
+                <span class="status-badge ${getStatusClass(order.status)}">${order.status}</span>
+            `;
+                    ordersGrid.appendChild(orderCard);
+                });
             });
         }
 
-        function showInvoiceButton(tableNumber) {
-        const invoiceButton = document.getElementById('generateInvoice');
-        invoiceButton.style.display = 'block';
-        invoiceButton.onclick = function() {
-            generateInvoice(tableNumber);
-        };
-    }
 
-    // Function to generate invoice
-    function generateInvoice(tableNumber) {
-        window.location.href = `/generate_invoice/${tableNumber}`;
-    }
+        function generateUPIQRCode(tableNumber) {
+            fetch(`/get_total_amount/${tableNumber}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.totalAmount) {
+                        const totalAmount = data.totalAmount;
+                        const upiID = '8519877501@upi';  // Replace this with your UPI ID
+
+                        // Construct the UPI payment URL
+                        const upiUrl = `upi://pay?pa=${upiID}&pn=Restaurant&am=${totalAmount}&cu=INR`;
+
+                        // Encode the URL to ensure special characters are handled correctly
+                        const encodedUpiUrl = encodeURIComponent(upiUrl);
+
+                        // Use goqr.me API to generate the QR code
+                        const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?data=${encodedUpiUrl}&size=250x250`;
+
+                        // Update the image src with the generated QR code URL
+                        document.getElementById('qrCodeImage').src = qrCodeUrl;
+                        document.getElementById('upiQRCode').style.display = 'block';
+                    } else {
+                        alert('Error generating UPI QR Code: Total amount not found.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error generating UPI QR Code:', error);
+                });
+        }
+
+
+
+
+        function generateInvoice(tableNumber) {
+            if (!tableNumber) {
+                console.error('No table number provided');
+                return;
+            }
+            window.location.href = `/generate_invoice/${tableNumber}`;
+        }
 
     </script>
 </body>
